@@ -7,3 +7,4 @@ python-dotenv
 python-jose
 python-multipart
 requests
+tortoise-orm

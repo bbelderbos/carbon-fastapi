@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from .images import create_carbon_image
+from .db import load_users
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
 
-fake_users_db = {
+users_db = {
     "bob": {
         "username": "bob",
         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
@@ -99,7 +100,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = get_user(users_db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -107,7 +108,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
