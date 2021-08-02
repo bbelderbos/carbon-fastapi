@@ -1,1 +1,8 @@
 git+https://github.com/bbelderbos/Carbon-API.git
+fastapi
+uvicorn
+bcrypt
+passlib
+python-dotenv
+python-jose
+python-multipart
