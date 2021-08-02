@@ -1,6 +1,5 @@
 from textwrap import dedent
 import asyncio
-import os
 
 from carbon.carbon import get_response
 from carbon.utility import createURLString, validateBody
