@@ -18,7 +18,7 @@ def test_cannot_access_without_login(client, subpath):
 
 def test_read_item(client):
     response = client.post(
-        "/token", data={"username": "bob", "password": "secret"})
+        "/token", data={"username": "bob", "password": "handl3bar"})
     assert response.status_code == 200
     resp_dict = response.json()
     assert resp_dict["token_type"] == "bearer"

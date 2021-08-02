@@ -36,7 +36,7 @@ async def init(db_url=None):
 
     await Tortoise.init(
         db_url=db_url,
-        modules={'models': ['__main__']}
+        modules={'models': [__name__]}
     )
     await Tortoise.generate_schemas()
 
@@ -60,6 +60,20 @@ async def main(args):
     await init()
     await create_user(args.username, args.password)
     print(f"{args.username} created")
+
+
+users_db = {}
+
+
+async def get_users():
+    await init()
+    users = await User.all()
+    users_db = {u.username: {"username": u.username,
+                             "hashed_password": u.password}
+                for u in users}
+
+
+run_async(get_users())
 
 
 if __name__ == "__main__":
