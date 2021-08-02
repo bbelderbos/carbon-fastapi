@@ -7,16 +7,24 @@ from carbon.utility import createURLString, validateBody
 
 # https://github.com/cyberboysumanjay/Carbon-API/issues/9
 NEW_LINE = "%250A"
+DEFAULT_THEME = "Sethi"
+DEFAULT_LANGUAGE = "Python"
 
 loop = asyncio.get_event_loop()
 
 
-def _create_carbon_compatible_newlines(code):
-    return code.replace("\n", NEW_LINE)
+def _create_payload(code, kwargs):
+    payload = {
+        "code": code.replace("\n", NEW_LINE),
+        "theme": kwargs.pop("theme", DEFAULT_THEME),
+        "language": kwargs.pop("language", DEFAULT_LANGUAGE),
+    }
+    payload.update(kwargs)
+    return payload
 
 
-def create_carbon_image(payload: dict[str, str], outfile: str) -> str:
-    payload["code"] = _create_carbon_compatible_newlines(payload["code"])
+def create_carbon_image(code: str, outfile: str, **kwargs: dict[str, str]) -> str:
+    payload = _create_payload(code, kwargs)
     validatedBody = validateBody(payload)
     carbonURL = createURLString(validatedBody)
     result_file = loop.run_until_complete(
@@ -29,13 +37,13 @@ if __name__ == "__main__":
         "Don't worry about getting it right. Just get it started."
         - Marie Forleo
     """
+    code = dedent(quote).strip()
     payload = {
-        "code": dedent(quote).strip(),
         "backgroundColor": "C4F2FD",
         "theme": "Material",
         "language": "Plain Text",
     }
-    # ret = create_carbon_image(payload, "out.png")
+    # ret = create_carbon_image(code, "out.png", **payload)
     # print(ret)
 
     code = """
@@ -46,10 +54,6 @@ if __name__ == "__main__":
     >>> f(days)
     ('thurs', 'sun')
     """
-    payload = {
-        "code": dedent(code).strip(),
-        "theme": "Sethi",
-        "language": "Python",
-    }
-    ret = create_carbon_image(payload, "out.png")
+    code = dedent(code).strip()
+    ret = create_carbon_image(code, "out.png")
     print(ret)
