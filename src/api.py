@@ -17,7 +17,7 @@ load_dotenv()
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = os.environ.get("ALGORITHM") or "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = (
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
     or 30)
 
@@ -104,11 +104,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
-
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
 
 
 @app.get("/users/me/items/")
