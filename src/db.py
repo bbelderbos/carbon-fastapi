@@ -44,8 +44,7 @@ async def init(db_url=None):
 async def create_user(username, password):
     """Creates user encrypting password, raises exception
        if user already exists"""
-    user = await User.get_or_none(
-        username=username)
+    user = await get_user(username)
     if user is None:
         encrypted_pw = get_password_hash(password)
         user = await User.create(
@@ -62,18 +61,11 @@ async def main(args):
     print(f"{args.username} created")
 
 
-users_db = {}
-
-
-async def get_users():
+async def get_user(username):
     await init()
-    users = await User.all()
-    users_db = {u.username: {"username": u.username,
-                             "hashed_password": u.password}
-                for u in users}
-
-
-run_async(get_users())
+    user = await User.get_or_none(
+        username=username)
+    return user
 
 
 if __name__ == "__main__":

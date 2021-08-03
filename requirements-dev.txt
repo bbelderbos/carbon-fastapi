@@ -1,5 +1,7 @@
 -r requirements.txt
 pytest
 pytest-cov
+asynctest
+pytest-asyncio
 flake8
 mypy

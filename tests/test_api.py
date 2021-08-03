@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 import pytest
+# from httpx import AsyncClient
 
 from src.api import app
 
@@ -15,7 +16,15 @@ def test_cannot_access_without_login(client, subpath):
     assert response.status_code == 401
     assert response.json() == {'detail': 'Not authenticated'}
 
+"""
+@pytest.mark.asyncio
+async def test_root():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post(
+            "/token", data={"username": "bob", "password": "handl3bar"})
+    assert response.status_code == 200
 
+"""
 def test_read_item(client):
     response = client.post(
         "/token", data={"username": "bob", "password": "handl3bar"})

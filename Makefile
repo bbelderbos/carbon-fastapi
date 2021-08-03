@@ -22,6 +22,9 @@ test:
 cov:
 	pytest --cov=src --cov-report term-missing
 
+.PHONY: runs
+runs:
+	uvicorn src.api:app --reload
+
 .PHONY: ci
 ci: lint typing test
-

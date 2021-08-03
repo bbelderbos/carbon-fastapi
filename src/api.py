@@ -11,14 +11,15 @@ from pydantic import BaseModel
 from tortoise import run_async
 
 from .images import create_carbon_image
-from .db import users_db
+from .db import get_user
 
 load_dotenv()
 
 SECRET_KEY = os.environ["SECRET_KEY"]
-ALGORITHM = os.environ["ALGORITHM"]
-ACCESS_TOKEN_EXPIRE_MINUTES = int(
-    os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+ALGORITHM = os.environ.get("ALGORITHM") or "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = (
+    os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
+    or 30)
 
 
 class Token(BaseModel):
@@ -32,10 +33,6 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     username: str
-
-
-class UserInDB(User):
-    hashed_password: str
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -53,17 +50,11 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
+async def authenticate_user(username: str, password: str):
+    user = await get_user(username)
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.password):
         return False
     return user
 
@@ -93,7 +84,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(users_db, username=token_data.username)
+    user = await get_user(token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -101,7 +92,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(users_db, form_data.username, form_data.password)
+    user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
