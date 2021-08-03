@@ -22,8 +22,8 @@ test:
 cov:
 	pytest --cov=src --cov-report term-missing
 
-.PHONY: runs
-runs:
+.PHONY: runserver
+runserver:
 	uvicorn src.api:app --reload
 
 .PHONY: ci

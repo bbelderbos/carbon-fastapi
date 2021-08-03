@@ -4,11 +4,12 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from tortoise import run_async
+from tortoise.contrib.fastapi import register_tortoise
 
 from .images import create_carbon_image
 from .db import get_user
@@ -33,6 +34,11 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     username: str
+
+
+class CarbonPayload(BaseModel):
+    code: str
+    parameters: dict[str, str] = {}
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -91,7 +97,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 
 @app.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -106,6 +114,17 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_user)):
-    return [{"item_id": "Foo", "owner": current_user.username}]
+@app.post("/images", status_code=201, response_class=FileResponse)
+async def create_code_image(payload: CarbonPayload,
+                            current_user: User = Depends(get_current_user)):
+    ret = await create_carbon_image(payload.code, **payload.parameters)
+    return ret
+
+
+register_tortoise(
+    app,
+    db_url=os.getenv("DATABASE_URL"),
+    modules={"models": ["src.db"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)

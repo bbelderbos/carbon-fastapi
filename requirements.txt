@@ -1,6 +1,7 @@
 git+https://github.com/bbelderbos/Carbon-API.git
 fastapi
 uvicorn
+aiofiles
 bcrypt
 passlib
 python-dotenv

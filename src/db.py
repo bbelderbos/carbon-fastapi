@@ -9,6 +9,8 @@ from tortoise import Tortoise, fields, run_async
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 load_dotenv()
 
+PYTEST = "pytest"
+
 
 class UserExists(Exception):
     pass
@@ -33,7 +35,6 @@ async def init(db_url=None):
         db_url = os.getenv("DATABASE_URL")
         if db_url is None:
             raise RuntimeError("Please specify a DB")
-
     await Tortoise.init(
         db_url=db_url,
         modules={'models': [__name__]}
@@ -55,17 +56,16 @@ async def create_user(username, password):
         raise UserExists(f"Username {username} already exists")
 
 
+async def get_user(username):
+    user = await User.get_or_none(
+        username=username)
+    return user
+
+
 async def main(args):
     await init()
     await create_user(args.username, args.password)
     print(f"{args.username} created")
-
-
-async def get_user(username):
-    await init()
-    user = await User.get_or_none(
-        username=username)
-    return user
 
 
 if __name__ == "__main__":
