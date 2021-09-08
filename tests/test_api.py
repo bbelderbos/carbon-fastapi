@@ -55,3 +55,33 @@ def test_create_mindset_tip_image(client, token, payload):
     assert response.status_code == 201
     assert response.headers["content-type"] == "image/png"
     assert response.headers["content-length"] == '19674'
+
+
+def test_create_new_user_that_already_exists(client, user):
+    payload = {
+        "username": "bob", "password": "changeme", "password2": "changeme"
+    }
+    response = client.post(
+        "/users", json=payload)
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'User already exists'}
+
+
+def test_create_new_user_mismatching_password(client, user):
+    payload = {
+        "username": "bob2", "password": "changeme", "password2": "changeme2"
+    }
+    response = client.post(
+        "/users", json=payload)
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'The two passwords should match'}
+
+
+def test_create_new_user_correctly(client, user):
+    payload = {
+        "username": "bob2", "password": "changeme", "password2": "changeme"
+    }
+    response = client.post(
+        "/users", json=payload)
+    assert response.status_code == 201
+    assert response.json() == {'username': 'bob2'}

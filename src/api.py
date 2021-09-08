@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from tortoise.contrib.fastapi import register_tortoise
 
 from .images import create_carbon_image
-from .db import get_user
+from .db import get_user, create_user
 
 load_dotenv()
 
@@ -34,6 +34,12 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     username: str
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    password2: str
 
 
 class CarbonPayload(BaseModel):
@@ -118,6 +124,32 @@ async def login_for_access_token(
 async def create_code_image(payload: CarbonPayload,
                             current_user: User = Depends(get_current_user)):
     ret = await create_carbon_image(payload.code, **payload.parameters)
+    return ret
+
+
+@app.post("/users", status_code=201, response_model=User)
+async def signup(payload: UserCreate):
+    """Create a new user in the database"""
+    username = payload.username
+    password = payload.password
+    password2 = payload.password2
+
+    user = await get_user(username)
+    if user is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists",
+        )
+
+    if password != password2:
+        raise HTTPException(
+            status_code=400,
+            detail="The two passwords should match",
+        )
+
+    # TODO: could also check password strength
+
+    ret = await create_user(username, password)
     return ret
 
 
